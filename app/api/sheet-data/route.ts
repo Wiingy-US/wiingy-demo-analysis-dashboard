@@ -1,9 +1,4 @@
-import {
-  EVENT_NAMES,
-  EXPECTED_HEADERS,
-  SHEET_TAB,
-  eventStatusHeader,
-} from "@/lib/constants";
+import { EVENTS, EXPECTED_HEADERS, SHEET_TAB } from "@/lib/constants";
 import { mockRows } from "@/lib/mockData";
 import type {
   DemoRow,
@@ -56,9 +51,10 @@ function buildRow(index: HeaderIndex, row: string[]): DemoRow {
     return (row[i] ?? "").toString();
   };
 
+  // Keyed by our internal event key, read from the event's real status column.
   const events: EventStatusMap = {};
-  for (const name of EVENT_NAMES) {
-    events[name] = parseEventStatus(get(eventStatusHeader(name)));
+  for (const event of EVENTS) {
+    events[event.name] = parseEventStatus(get(event.statusHeader));
   }
 
   return {
