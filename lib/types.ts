@@ -40,6 +40,10 @@ export interface DemoRow {
   classification_confidence: string;
   failure_summary: string;
 
+  // Optional: stated learner intent. Not yet parsed by the API route, so it
+  // may be undefined until the source column is wired through.
+  student_intent?: string;
+
   // Per-event observed status
   events: EventStatusMap;
 }

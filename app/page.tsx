@@ -4,12 +4,20 @@ import { useEffect, useState } from "react";
 import EventComplianceGrid from "@/components/EventComplianceGrid";
 import FailureBucketChart from "@/components/FailureBucketChart";
 import OutcomeSnapshot from "@/components/OutcomeSnapshot";
+import RawDataTable from "@/components/RawDataTable";
 import {
   eventCompliance,
   failureBucketCounts,
   outcomeSnapshot,
 } from "@/lib/aggregations";
 import type { SheetDataResponse } from "@/lib/types";
+
+type Tab = "dashboard" | "raw";
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "raw", label: "Raw data" },
+];
 
 function Section({
   title,
@@ -29,7 +37,9 @@ function Section({
 export default function Home() {
   const [data, setData] = useState<SheetDataResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("dashboard");
 
+  // Fetch once on mount; both tabs share the same rows (no refetch on switch).
   useEffect(() => {
     let active = true;
     fetch("/api/sheet-data")
@@ -87,6 +97,26 @@ export default function Home() {
           </p>
         </header>
 
+        <nav className="flex gap-1 border-b border-neutral-200">
+          {TABS.map((t) => {
+            const active = t.id === tab;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={
+                  active
+                    ? "-mb-px border-b-2 border-neutral-900 px-3 py-2 text-sm font-medium text-neutral-900"
+                    : "-mb-px border-b-2 border-transparent px-3 py-2 text-sm text-neutral-500 hover:text-neutral-800"
+                }
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </nav>
+
         {data.missingHeaders.length > 0 && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             <span className="font-medium">Missing expected columns:</span>{" "}
@@ -94,17 +124,23 @@ export default function Home() {
           </div>
         )}
 
-        <Section title="Outcome snapshot">
-          <OutcomeSnapshot {...snapshot} />
-        </Section>
+        {tab === "dashboard" ? (
+          <>
+            <Section title="Outcome snapshot">
+              <OutcomeSnapshot {...snapshot} />
+            </Section>
 
-        <Section title="Failure buckets (lost + in-progress demos)">
-          <FailureBucketChart data={buckets} />
-        </Section>
+            <Section title="Failure buckets (lost + in-progress demos)">
+              <FailureBucketChart data={buckets} />
+            </Section>
 
-        <Section title="Event compliance">
-          <EventComplianceGrid data={compliance} />
-        </Section>
+            <Section title="Event compliance">
+              <EventComplianceGrid data={compliance} />
+            </Section>
+          </>
+        ) : (
+          <RawDataTable rows={data.rows} source={data.source} />
+        )}
       </div>
     </main>
   );
